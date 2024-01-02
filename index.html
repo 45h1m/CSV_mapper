@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="theme-color" content="#000" />
+        <title>CSV-Mapper</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans",
+                    "Helvetica Neue", sans-serif;
+                box-sizing: border-box;
+                color: white;
+                /* border: 1px solid rgba(255, 0, 0, 0.356);
+            background: rgba(255, 0, 0, 0.092); */
+            }
+
+            :root {
+                --red-prime: rgb(184, 34, 34);
+                --blue-prime: rgb(203, 100, 45);
+            }
+
+            body {
+                background: black;
+                height: 100vh;
+                display: flex;
+            }
+
+            .flex {
+                display: flex;
+                flex: 1;
+            }
+
+            .y {
+                flex-direction: column;
+            }
+
+            .x {
+                flex-direction: row;
+            }
+
+            .arrange-container {
+                padding: 2rem;
+                padding-bottom: 100px;
+                width: 100%;
+                max-width: 600px;
+                margin: 0 auto;
+            }
+
+            .to-columns,
+            .from-columns {
+                width: 100px;
+                gap: 0.2rem;
+            }
+
+            .from-heading {
+                background: var(--red-prime);
+                z-index: 5;
+            }
+
+            .to-heading {
+                background: var(--blue-prime);
+            }
+
+            .from-heading,
+            .to-heading {
+                width: 100%;
+                padding: 0.5rem;
+                height: min-content;
+                position: relative;
+                cursor: grab;
+                transition: 200ms ease;
+            }
+
+            .from-heading.dragging,
+            .to-heading.dragging {
+                box-shadow: 0 0 20px black;
+                z-index: 6;
+            }
+
+            .from-heading p,
+            .to-heading p {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .to-heading p {
+                padding: 0 0.7rem;
+            }
+
+            .from-heading::before {
+                content: "";
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                left: 100%;
+                width: 0;
+                height: 0;
+                display: block;
+                border: 10px solid transparent;
+                border-left: 10px solid var(--red-prime);
+                z-index: 2;
+            }
+
+            .from-heading::after {
+                content: "";
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                left: -10px;
+                width: 5px;
+                height: 3px;
+                display: block;
+                background: grey;
+                box-shadow: 0 6px 0 0 grey, 0 -6px 0 0 grey;
+                z-index: 2;
+            }
+            .to-heading::after {
+                content: "";
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                right: -10px;
+                width: 5px;
+                height: 3px;
+                display: block;
+                background: grey;
+                box-shadow: 0 6px 0 0 grey, 0 -6px 0 0 grey;
+                z-index: 2;
+            }
+
+            .from-heading .btns,
+            .to-heading .btns {
+                position: absolute;
+                height: 100%;
+                background: var(--red-prime);
+                top: 0;
+                right: 0;
+                justify-content: center;
+                opacity: 0;
+                transition: opacity 100ms ease-out;
+            }
+
+            .to-heading .btns {
+                background: var(--blue-prime);
+            }
+
+            .from-heading:hover .btns,
+            .to-heading:hover .btns {
+                opacity: 1;
+            }
+
+            button {
+                background: none;
+                border: none;
+                aspect-ratio: 1;
+                cursor: pointer;
+            }
+
+            button:hover {
+                filter: brightness(80%);
+            }
+
+            .fixed-btn {
+                position: sticky;
+                bottom: 4.5rem;
+                padding: 0.5rem;
+                width: min-content;
+                z-index: 5;
+                aspect-ratio: 1;
+                border-radius: 50px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .fixed-btn p {
+                font-size: 0.8rem;
+                white-space: nowrap;
+                padding-left: 1rem;
+            }
+
+            body.uploaded .fixed-btn p {
+                opacity: 0;
+            }
+
+            button.circle {
+                background: royalblue;
+                aspect-ratio: 1;
+                display: grid;
+                place-items: center;
+                border-radius: 50px;
+                width: 34px;
+                box-shadow: 0 7px 20px rgba(0, 0, 0, 0.5);
+            }
+
+            button.primary {
+                box-shadow: 0 0 0 2px white;
+                padding: 0.8rem 1rem;
+                aspect-ratio: 3 / 1;
+                border-radius: 50px;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            footer {
+                position: fixed;
+                bottom: 0;
+                display: flex;
+                justify-content: center;
+                padding: 1rem 1rem;
+                width: 100%;
+                background: black;
+                z-index: 7;
+                border-top: 2px solid #ffffff28;
+            }
+
+            header {
+                width: 100%;
+                padding: 2rem 1rem;
+                border-bottom: 2px solid #ffffff28;
+                max-width: 900px;
+                margin:  0 auto;
+            }
+
+            .gap-1 {
+                gap: 1rem;
+            }
+
+            .gap-p5 {
+                gap: 0.5rem;
+            }
+
+            .file-input {
+                opacity: 0.7;
+                width: 80%;
+            }
+
+            .file-input::-webkit-file-upload-button {
+                display: none;
+            }
+
+            .file-input::file-selector-button {
+                display: none;
+            }
+        </style>
+    </head>
+    <body class="">
+        <div class="app flex y">
+
+
+            <header>
+
+                <div class="logo">
+                    <h3>CSV <small>Mapper</small></h3>
+                </div>
+            </header>
+
+            <div class="arrange-container flex x">
+                <div class="from-columns heading-container flex y">
+
+                    <!-- <div class="from-heading column-heading" draggable="true">
+                        <p>Bhopender</p>
+                        <div class="btns flex">
+                            <button class="remove-heading-btn">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    fill="currentColor"
+                                    class="bi bi-trash3-fill"
+                                    viewBox="0 0 16 16"
+                                >
+                                    <path
+                                        d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06Zm6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528ZM8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5"
+                                    />
+                                </svg>
+                            </button>
+                        </div>
+                    </div> -->
+                    
+
+                    <div class="fixed-btn" id="fixed-btn-source-headings">
+                        <button class="circle add-heading-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-plus" viewBox="0 0 16 16">
+                                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                              </svg>
+                        </button>
+                        <p>Data Source</p>
+                    </div>
+                </div>
+
+                <div class="to-columns heading-container flex y">
+                    
+                    <!-- <div class="to-heading column-heading">
+                        <p>Varient</p>
+                        <div class="btns flex">
+                            <button class="remove-heading-btn">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    fill="currentColor"
+                                    class="bi bi-trash3-fill"
+                                    viewBox="0 0 16 16"
+                                >
+                                    <path
+                                        d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06Zm6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528ZM8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5"
+                                    />
+                                </svg>
+                            </button>
+                        </div>
+                    </div> -->
+
+                    <div class="fixed-btn" id="fixed-btn-final-headings">
+                        <button class="circle add-heading-btn final-file">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-plus" viewBox="0 0 16 16">
+                                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                              </svg>
+                        </button>
+
+                        <p>Final format</p>
+                    </div>
+                </div>
+            </div>
+
+            <footer>
+
+                <div class="flex y gap-p5">
+
+                    <input type="file" class="file-input source" id="source-csv-file" accept=".csv" onchange="handleFile(this);">
+                    <input type="file" class="file-input final" id="final-csv-file" accept=".csv" onchange="handleFile(this);">
+                </div>
+                <button class="primary">Convert<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-right-circle" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8m15 0A8 8 0 1 1 0 8a8 8 0 0 1 16 0M4.5 7.5a.5.5 0 0 0 0 1h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5z"/>
+                  </svg></button>
+            </footer>
+
+        </div>
+
+        <script>
+
+
+            
+
+        </script>
+
+        <script src="./main.js"></script>
+    </body>
+</html>
