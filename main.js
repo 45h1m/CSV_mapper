@@ -1,6 +1,9 @@
 const $ = (name) => document.querySelector(name);
 const $$ = (name) => document.querySelectorAll(name);
 
+let sourceFile = null;
+let finalFile = null;
+
 function initDrag() {
     [...$$(".heading-container")].forEach((container) => {
         let draggables = [...container.querySelectorAll(".column-heading")];
@@ -79,7 +82,16 @@ function handleFile(input) {
         const data = e.target.result;
         const jsonData = csvJSON(data);
         console.log(jsonData);
-        (input.classList.contains('source')) ? renderKeys(jsonData, 'source') : renderKeys(jsonData, 'final');
+        if(input.classList.contains('source')) {
+
+            sourceFile = jsonData;
+            renderKeys(jsonData, 'source');
+
+        } else {
+
+            finalFile = jsonData;
+            renderKeys(jsonData, 'final');
+        } 
 
         initDrag();
 
@@ -210,3 +222,71 @@ function createFromHeading(heading) {
 
     return container;
 }
+
+
+function mapCSV() {
+
+    if(!sourceFile || !finalFile) return console.log('select files');
+
+    let fromHeadingElems = [...$$('.from-heading')];
+    let toHeadingElems = [...$$('.to-heading')];
+
+    let fromHeadings = fromHeadingElems.map(elem => elem.querySelector('p').innerHTML);
+    let toHeadings = toHeadingElems.map(elem => elem.querySelector('p').innerHTML);
+    
+    if(fromHeadings.length != toHeadings.length) return console.log('collum no. not equal');
+    
+    let mapped = [];
+
+    for(let i = 0; i<sourceFile.length - 1; i++) {
+
+        let obj = {};
+
+        for(let j = 0; j<fromHeadings.length; j++) {
+
+            obj[toHeadings[j]] = sourceFile[i][fromHeadings[j]];
+        }
+        mapped.push(obj);
+    } 
+
+    console.log(mapped)
+    let finalCSV = convertToCSV(mapped);
+
+    console.log(finalCSV)
+
+    downloadCSV(finalCSV);
+}
+
+
+function convertToCSV(data) {
+    const csvRows = [];
+    const headers = Object.keys(data[0]);
+  
+    // Add headers to the CSV
+    csvRows.push(headers.join(','));
+  
+    // Add data rows to the CSV
+    for (const row of data) {
+      const values = headers.map(header => row[header]);
+      csvRows.push(values.join(','));
+    }
+  
+    return csvRows.join('\n');
+  }
+
+
+  function downloadCSV(csvData) {
+
+    const blob = new Blob([csvData], { type: 'text/csv' });
+
+    // Create a download link
+    const downloadLink = document.createElement('a');
+    downloadLink.href = URL.createObjectURL(blob);
+    downloadLink.download = 'output.csv';
+
+    // Append the link to the body
+    // document.body.appendChild(downloadLink);
+
+    // Trigger the download
+    downloadLink.click();
+  }
