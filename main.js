@@ -76,6 +76,8 @@ function handleFile(input) {
 
     if (!file) return;
 
+    if(file.type !== 'text/csv') return alert("vai .csv file select karna tha")
+
     const reader = new FileReader();
 
     reader.onload = (e) => {
@@ -99,8 +101,6 @@ function handleFile(input) {
     };
 
     reader.readAsText(file);
-
-    console.log(file);
 }
 
 function csvJSON(csv) {
@@ -226,7 +226,7 @@ function createFromHeading(heading) {
 
 function mapCSV() {
 
-    if(!sourceFile || !finalFile) return console.log('select files');
+    if(!sourceFile || !finalFile) return alert('vai dono files select karlo');
 
     let fromHeadingElems = [...$$('.from-heading')];
     let toHeadingElems = [...$$('.to-heading')];
@@ -234,7 +234,7 @@ function mapCSV() {
     let fromHeadings = fromHeadingElems.map(elem => elem.querySelector('p').innerHTML);
     let toHeadings = toHeadingElems.map(elem => elem.querySelector('p').innerHTML);
     
-    if(fromHeadings.length != toHeadings.length) return console.log('collum no. not equal');
+    if(fromHeadings.length != toHeadings.length) return alert('dono side ka no. of headings samne hona chahiye');
     
     let mapped = [];
 
